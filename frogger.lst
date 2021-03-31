@@ -1,0 +1,619 @@
+     1                                  columnas equ 15
+     2                                  filas equ 13
+     3                                  
+     4                                  stdout_read equ 0
+     5                                  sys_write equ 4 
+     6                                  stdout equ 1
+     7                                  sys_exit    equ     1
+     8                                  stdin       equ     0
+     9                                  stderr      equ     3
+    10                                  
+    11                                  SECTION .data
+    12                                  
+    13                                  
+    14 00000000 4F7063696F6E20696E-     men_opcion_no_valida: db "Opcion ingresada no valida.",0x0A
+    14 00000009 67726573616461206E-
+    14 00000012 6F2076616C6964612E-
+    14 0000001B 0A                 
+    15                                  len_opcion_no_valida: equ $-men_opcion_no_valida
+    16                                  
+    17 0000001C 0A0000000D000000        salto: dd 0xa, 0xd
+    18                                  sal_len: equ $-salto
+    19                                  
+    20 00000024 1B5B481B5B324A          ClearTerm: db   27,"[H",27,"[2J"    ; <ESC> [H <ESC> [2J
+    21                                  CLEARLEN   equ  $-ClearTerm         ; Length of term clear string
+    22                                  
+    23                                           
+    24 0000002B 0F000000                max dd 15 
+    25                                  
+    26                                        
+    27                                  SECTION .bss
+    28                                  
+    29 00000000 <res 000EF484>          	tablero resb 980100 
+    30 000EF484 <res 000EF484>          	tablero_log resb 980100                   
+    31 001DE908 <res 00000002>          	movimiento resb 2   
+    32                                  	  
+    33                                  		
+    34                                  SECTION .text
+    35                                                                   
+    36                                  global _start
+    37                                  
+    38                                  
+    39                                  _start:
+    40 00000000 90                      	nop
+    41                                  
+    42                                  crear_matriz:
+    43 00000001 31C9                    	xor ecx,ecx
+    44 00000003 31C0                    	xor eax,eax
+    45 00000005 31DB                    	xor ebx,ebx
+    46 00000007 BB[00000000]            	mov ebx,tablero
+    47                                  
+    48                                  
+    49                                  forI:
+    50 0000000C 31F6                    	xor esi,esi
+    51 0000000E 83F90D                  	cmp ecx,filas
+    52 00000011 7C02                    	jl forJ
+    53 00000013 EB20                    	jmp crear_matriz_log
+    54                                  
+    55                                  
+    56                                  forJ:
+    57 00000015 83FE0F                  	cmp esi,columnas
+    58 00000018 7C03                    	jl initialization
+    59 0000001A 41                      	inc ecx
+    60 0000001B EBEF                    	jmp forI
+    61                                  
+    62                                  initialization:  
+    63 0000001D 89C8                    	mov eax,ecx                                              
+    64 0000001F 83F800                  	cmp eax, 0
+    65 00000022 747D                    	jz primera_linea
+    66 00000024 83F806                  	cmp eax, 6
+    67 00000027 7451                    	jz camino
+    68 00000029 83F80C                  	cmp eax, 12
+    69 0000002C 744C                    	jz camino 
+    70 0000002E 83F807                  	cmp eax, 7
+    71 00000031 7C59                    	jl agua
+    72 00000033 EB33                    	jmp espacio_libre
+    73                                  	
+    74                                  crear_matriz_log:
+    75 00000035 31C9                    	xor ecx,ecx
+    76 00000037 31C0                    	xor eax,eax
+    77 00000039 31DB                    	xor ebx,ebx
+    78 0000003B BB[84F40E00]            	mov ebx,tablero_log
+    79                                  
+    80                                  
+    81                                  forI2:
+    82 00000040 31F6                    	xor esi,esi
+    83 00000042 83F90D                  	cmp ecx,filas
+    84 00000045 7C05                    	jl forJ2
+    85 00000047 E977010000              	jmp colocar_jugador
+    86                                  
+    87                                  
+    88                                  forJ2:
+    89 0000004C 83FE0F                  	cmp esi,columnas
+    90 0000004F 7C03                    	jl initialization2
+    91 00000051 41                      	inc ecx
+    92 00000052 EBEC                    	jmp forI2
+    93                                  
+    94                                  initialization2:  
+    95 00000054 89C8                    	mov eax,ecx                                              
+    96 00000056 F725[2B000000]          	mul dword[max]
+    97 0000005C 01F0                    	add eax,esi 
+    98 0000005E C7048300000000          	mov dword[ebx + eax * 4],0
+    99 00000065 46                      	inc esi 
+   100 00000066 EBE4                    	jmp forJ2
+   101                                  
+   102                                  espacio_libre:
+   103 00000068 F725[2B000000]          	mul dword[max]
+   104 0000006E 01F0                    	add eax,esi 
+   105 00000070 C7048320000000          	mov dword[ebx + eax * 4],' ' 
+   106 00000077 46                      	inc esi 
+   107 00000078 EB9B                    	jmp forJ
+   108                                  	
+   109                                  
+   110                                  camino:
+   111 0000007A F725[2B000000]          	mul dword[max]
+   112 00000080 01F0                    	add eax,esi 
+   113 00000082 C704833D000000          	mov dword[ebx + eax * 4],"="
+   114 00000089 46                      	inc esi 
+   115 0000008A EB89                    	jmp forJ
+   116                                  
+   117                                  agua:
+   118 0000008C F725[2B000000]          	mul dword[max]
+   119 00000092 01F0                    	add eax,esi 
+   120 00000094 C704837E000000          	mov dword[ebx + eax * 4],'~'
+   121 0000009B 46                      	inc esi 
+   122 0000009C E974FFFFFF              	jmp forJ
+   123                                  
+   124                                  primera_linea:
+   125 000000A1 F725[2B000000]          	mul dword[max]
+   126 000000A7 01F0                    	add eax,esi 
+   127 000000A9 E871050000              	call es_par
+   128 000000AE 83FA00                  	cmp edx,0
+   129 000000B1 7404                    	jz pared
+   130 000000B3 89C8                    	mov eax,ecx
+   131 000000B5 EB15                    	jmp poner_x
+   132                                  	
+   133                                  pared:
+   134 000000B7 F725[2B000000]          	mul dword[max]
+   135 000000BD 01F0                    	add eax,esi 
+   136 000000BF C704837C000000          	mov dword[ebx + eax * 4],'|' 
+   137 000000C6 46                      	inc esi 
+   138 000000C7 E949FFFFFF              	jmp forJ
+   139                                  	
+   140                                  	
+   141                                  poner_x:
+   142 000000CC 89C8                     	mov eax,ecx
+   143 000000CE F725[2B000000]          	mul dword[max]
+   144 000000D4 01F0                    	add eax,esi 
+   145 000000D6 C7048378000000          	mov dword[ebx + eax * 4],'x'
+   146 000000DD 46                      	inc esi
+   147 000000DE E932FFFFFF              	jmp forJ 
+   148                                  	
+   149                                  
+   150                                  print:
+   151 000000E3 B804000000              	mov eax, 4                          ; Specify sys_write call
+   152 000000E8 BB01000000              	mov ebx, 1                          ; Specify File Descriptor 1: Stdout
+   153 000000ED B9[24000000]            	mov ecx, ClearTerm                  ; Pass offset of terminal control string
+   154 000000F2 BA07000000              	mov edx, CLEARLEN                   ; Pass the length of terminal control string
+   155 000000F7 CD80                    	int 80h
+   156 000000F9 BE[00000000]                mov     esi,tablero                
+   157 000000FE B90D000000                  mov     ecx,filas
+   158 00000103 BA0F000000                  mov     edx,columnas
+   159 00000108 0FAFCA                      imul    ecx,edx
+   160 0000010B 89CB                        mov     ebx,ecx
+   161 0000010D 4B                          dec     ebx
+   162 0000010E 89DF                        mov     edi, ebx             
+   163 00000110 B801000000                  mov     eax, 1
+   164                                  
+   165                                  .PrintArray:
+   166 00000115 BB0F000000                  mov     ebx,columnas
+   167 0000011A 43                          inc     ebx
+   168 0000011B 39D8                        cmp     eax,ebx
+   169 0000011D 7507                        jnz     .continue
+   170 0000011F E87B000000                  call    print_endLine
+   171 00000124 EB00                        jmp     .continue
+   172                                  
+   173                                  .continue:
+   174 00000126 50                          push    eax                  
+   175 00000127 8B0E                        mov     ecx,[esi]                                                                             
+   176 00000129 51                          push    ecx                          
+   177 0000012A 89E1                        mov     ecx, esp    
+   178 0000012C BA01000000                  mov     edx, 1                 
+   179 00000131 BB01000000                  mov     ebx, stdout
+   180 00000136 B804000000                  mov     eax, sys_write
+   181 0000013B CD80                        int     80h                             
+   182 0000013D 4A                          dec edx
+   183 0000013E 59                          pop     ecx                             
+   184 0000013F 83C604                      add esi,4                        
+   185 00000142 58                          pop     eax
+   186 00000143 40                          inc     eax
+   187 00000144 4F                          dec     edi                             
+   188 00000145 79CE                        jns     .PrintArray   
+   189                                                       
+   190                                  done:
+   191 00000147 E853000000                   call print_endLine
+   192 0000014C EB00                         jmp preguntar_movimiento
+   193                                  
+   194                                  
+   195                                  preguntar_movimiento:
+   196 0000014E B803000000                    mov eax, 3
+   197 00000153 BB00000000              	  mov ebx, 0
+   198 00000158 B9[08E91D00]               	  mov ecx, movimiento              
+   199 0000015D BA02000000                 	  mov edx, 2    
+   200 00000162 CD80                          int 80h
+   201 00000164 8B0D[08E91D00]                mov ecx, [movimiento]
+   202 0000016A 81F9770A0000            	  cmp ecx, 0xa77
+   203 00000170 0F84EB030000                  jz mover_arriba
+   204 00000176 81F9730A0000                  cmp ecx, 0xa73
+   205 0000017C 0F84B3030000                  jz mover_abajo
+   206 00000182 81F9640A0000                  cmp ecx, 0xa64
+   207 00000188 0F847F030000                  jz mover_derecha
+   208 0000018E 81F9610A0000                  cmp ecx, 0xa61
+   209 00000194 0F84F3030000                  jz mover_izquierda
+   210 0000019A E993040000                    jmp opcion_no_valida_inicial
+   211                                  
+   212                                  
+   213                                  print_endLine:
+   214 0000019F B9[1C000000]                mov ecx, salto
+   215 000001A4 BA08000000                  mov edx, sal_len
+   216 000001A9 E808000000                  call display_text
+   217 000001AE CD80                        int 0x80
+   218 000001B0 B801000000                  mov eax, 1
+   219 000001B5 C3                          ret
+   220                                  
+   221                                  display_text:
+   222 000001B6 B804000000              	mov eax,sys_write
+   223 000001BB BB01000000              	mov ebx, stdout
+   224 000001C0 CD80                    	int 80h
+   225 000001C2 C3                      	ret
+   226                                  
+   227                                  colocar_jugador:
+   228 000001C3 B8[00000000]            	mov eax,tablero
+   229 000001C8 BBBB000000              	mov ebx, 187
+   230 000001CD 8B3C98                  	mov edi, dword[eax+ebx*4]
+   231 000001D0 C704986F000000          	mov dword[eax+ebx*4], 'o'
+   232 000001D7 53                      	push ebx
+   233 000001D8 57                      	push edi 
+   234 000001D9 EB00                    	jmp colocar_automoviles
+   235                                  
+   236                                  
+   237                                  colocar_automoviles:
+   238 000001DB B8[00000000]            	mov eax,tablero
+   239 000001E0 B9[84F40E00]            	mov ecx,tablero_log
+   240 000001E5 BBB1000000              	mov ebx, 177
+   241 000001EA C704983C000000          	mov dword[eax+ebx*4], '<'
+   242 000001F1 C7049901000000          	mov dword[ecx+ebx*4], 1
+   243 000001F8 BBAA000000              	mov ebx, 170
+   244 000001FD C704983C000000          	mov dword[eax+ebx*4], '<'
+   245 00000204 C7049901000000          	mov dword[ecx+ebx*4], 1
+   246 0000020B BBA5000000              	mov ebx, 165
+   247 00000210 C704983C000000          	mov dword[eax+ebx*4], '<'
+   248 00000217 C7049901000000          	mov dword[ecx+ebx*4], 1
+   249 0000021E BBA4000000              	mov ebx, 164
+   250 00000223 C704983E000000          	mov dword[eax+ebx*4], '>'
+   251 0000022A C7049903000000          	mov dword[ecx+ebx*4], 3
+   252 00000231 BBA0000000              	mov ebx, 160
+   253 00000236 C704983E000000          	mov dword[eax+ebx*4], '>'
+   254 0000023D C7049903000000          	mov dword[ecx+ebx*4], 3
+   255 00000244 BB9B000000              	mov ebx, 155
+   256 00000249 C704983E000000          	mov dword[eax+ebx*4], '>'
+   257 00000250 C7049903000000          	mov dword[ecx+ebx*4], 3
+   258 00000257 BB94000000              	mov ebx,148
+   259 0000025C C704983C000000          	mov dword[eax+ebx*4], '<'
+   260 00000263 4B                      	dec ebx
+   261 00000264 C704983C000000          	mov dword[eax+ebx*4], '<'
+   262 0000026B C7049905000000          	mov dword[ecx+ebx*4], 5
+   263 00000272 BB89000000              	mov ebx,137
+   264 00000277 C704983C000000          	mov dword[eax+ebx*4], '<'
+   265 0000027E 4B                      	dec ebx
+   266 0000027F C704983C000000          	mov dword[eax+ebx*4], '<'
+   267 00000286 C7049905000000          	mov dword[ecx+ebx*4], 5
+   268 0000028D BB84000000              	mov ebx,132
+   269 00000292 C704983E000000          	mov dword[eax+ebx*4], '>'
+   270 00000299 C7049909000000          	mov dword[ecx+ebx*4], 9
+   271 000002A0 4B                      	dec ebx
+   272 000002A1 C704983E000000          	mov dword[eax+ebx*4], '>'
+   273 000002A8 4B                      	dec ebx
+   274 000002A9 C704983E000000          	mov dword[eax+ebx*4], '>'
+   275 000002B0 BB76000000              	mov ebx, 118
+   276 000002B5 C704983E000000          	mov dword[eax+ebx*4], '>'
+   277 000002BC C7049903000000          	mov dword[ecx+ebx*4], 3
+   278 000002C3 BB6F000000              	mov ebx, 111
+   279 000002C8 C704983E000000          	mov dword[eax+ebx*4], '>'
+   280 000002CF C7049903000000          	mov dword[ecx+ebx*4], 3
+   281 000002D6 BB6A000000              	mov ebx, 106
+   282 000002DB C704983E000000          	mov dword[eax+ebx*4], '>'
+   283 000002E2 C7049903000000          	mov dword[ecx+ebx*4], 3
+   284 000002E9 E9F5FDFFFF              	jmp print
+   285                                  	
+   286                                  
+   287                                  mover_automoviles:
+   288 000002EE B8[84F40E00]            	mov eax,tablero_log
+   289 000002F3 BB[00000000]            	mov ebx, tablero
+   290 000002F8 31C9                    	xor ecx, ecx
+   291 000002FA EB00                    	jmp for_automoviles
+   292                                  
+   293                                  for_automoviles:
+   294 000002FC BA0D000000              	mov edx,filas
+   295 00000301 6BD20F                  	imul edx, columnas
+   296 00000304 39D1                    	cmp ecx,edx
+   297 00000306 7C05                    	jl mover_objetos
+   298 00000308 E9D6FDFFFF              	jmp print
+   299                                  
+   300                                  mover_objetos:
+   301 0000030D 833C8801                	cmp dword[eax+ecx*4],1
+   302 00000311 745B                    	jz mover_rapidos_izquierda
+   303 00000313 833C8802                	cmp dword[eax+ecx*4],2
+   304 00000317 744B                    	jz rapido_bandera
+   305 00000319 833C8803                	cmp dword[eax+ecx*4],3
+   306 0000031D 0F84A6000000            	jz mover_rapidos_derecha
+   307 00000323 833C8805                	cmp dword[eax+ecx*4],5
+   308 00000327 0F84FB000000            	jz mover_medios_izquierda
+   309 0000032D 833C8806                	cmp dword[eax+ecx*4],6
+   310 00000331 7431                    	jz rapido_bandera
+   311 00000333 833C8807                	cmp dword[eax+ecx*4],7
+   312 00000337 742B                    	jz rapido_bandera
+   313 00000339 833C8808                	cmp dword[eax+ecx*4],8
+   314 0000033D 7425                    	jz rapido_bandera
+   315 0000033F 833C8809                	cmp dword[eax+ecx*4],9
+   316 00000343 0F8450010000            	jz mover_lentos_derecha
+   317 00000349 833C880D                	cmp dword[eax+ecx*4],13
+   318 0000034D 7415                    	jz rapido_bandera
+   319 0000034F 833C880C                	cmp dword[eax+ecx*4],12
+   320 00000353 740F                    	jz rapido_bandera
+   321 00000355 833C880B                	cmp dword[eax+ecx*4],11
+   322 00000359 7409                    	jz rapido_bandera
+   323 0000035B 833C880A                	cmp dword[eax+ecx*4],10
+   324 0000035F 7403                    	jz rapido_bandera
+   325 00000361 41                      	inc ecx
+   326 00000362 EB98                    	jmp for_automoviles
+   327                                  
+   328                                  
+   329                                  rapido_bandera:
+   330 00000364 8B1488                  	mov edx,dword[eax+ecx*4]
+   331 00000367 4A                      	dec edx
+   332 00000368 891488                  	mov dword[eax+ecx*4],edx
+   333 0000036B 41                      	inc ecx 
+   334 0000036C EB8E                    	jmp for_automoviles 
+   335                                  	
+   336                                  
+   337                                  mover_rapidos_izquierda:
+   338 0000036E 60                      	pusha
+   339 0000036F E83F020000              	call modulo_izquierda_autos
+   340 00000374 83FA00                  	cmp edx,0 
+   341 00000377 7428                    	jz continuar_fila
+   342 00000379 EB00                    	jmp realizar_movimiento 	
+   343                                  
+   344                                  
+   345                                  realizar_movimiento:
+   346 0000037B 61                      	popa
+   347 0000037C C7048B20000000          	mov dword[ebx+ecx*4], ' ' 
+   348 00000383 C7048800000000          	mov dword[eax+ecx*4], 0
+   349 0000038A 89CE                    	mov esi,ecx
+   350 0000038C 4E                      	dec esi 
+   351 0000038D C704B33C000000          	mov dword[ebx+esi*4], '<'
+   352 00000394 C704B001000000          	mov dword[eax+esi*4], 1
+   353 0000039B 41                      	inc ecx
+   354 0000039C E95BFFFFFF              	jmp for_automoviles
+   355                                  
+   356                                  continuar_fila:
+   357 000003A1 61                      	popa
+   358 000003A2 C7048B20000000          	mov dword[ebx+ecx*4], ' '
+   359 000003A9 C7048800000000          	mov dword[eax+ecx*4], 0
+   360 000003B0 89CA                    	mov edx,ecx
+   361 000003B2 83C20E                  	add edx,14
+   362 000003B5 C704933C000000          	mov dword[ebx+edx*4], '<'
+   363 000003BC C7049002000000          	mov dword[eax+edx*4], 2
+   364 000003C3 41                      	inc ecx
+   365 000003C4 E933FFFFFF              	jmp for_automoviles
+   366                                  	
+   367                                  
+   368                                  mover_rapidos_derecha:
+   369 000003C9 60                      	pusha
+   370 000003CA E8F6010000              	call modulo_derecha_autos
+   371 000003CF 83FA00                  	cmp edx,0 
+   372 000003D2 742A                    	jz continuar_fila_derecha
+   373 000003D4 EB00                    	jmp realizar_movimiento_derecha 
+   374                                  
+   375                                  
+   376                                  realizar_movimiento_derecha:
+   377 000003D6 61                      	popa
+   378 000003D7 C7048B20000000          	mov dword[ebx+ecx*4], ' '
+   379 000003DE C7048800000000          	mov dword[eax+ecx*4], 0
+   380 000003E5 89CE                    	mov esi,ecx
+   381 000003E7 46                      	inc esi 
+   382 000003E8 C704B33E000000          	mov dword[ebx+esi*4], '>'
+   383 000003EF C704B003000000          	mov dword[eax+esi*4], 3
+   384 000003F6 83C102                  	add ecx, 2
+   385 000003F9 E9FEFEFFFF              	jmp for_automoviles
+   386                                  
+   387                                  continuar_fila_derecha:
+   388 000003FE 61                      	popa
+   389 000003FF C7048B20000000          	mov dword[ebx+ecx*4], ' '
+   390 00000406 C7048800000000          	mov dword[eax+ecx*4], 0
+   391 0000040D 89CA                    	mov edx,ecx
+   392 0000040F 83EA0E                  	sub edx,14
+   393 00000412 C704933E000000          	mov dword[ebx+edx*4], '>'
+   394 00000419 C7049003000000          	mov dword[eax+edx*4], 3
+   395 00000420 83C102                  	add ecx, 2
+   396 00000423 E9D4FEFFFF              	jmp for_automoviles
+   397                                  
+   398                                  
+   399                                  
+   400                                  mover_medios_izquierda:
+   401 00000428 60                      	pusha
+   402 00000429 E885010000              	call modulo_izquierda_autos
+   403 0000042E 83FA00                  	cmp edx,0 
+   404 00000431 742D                    	jz continuar_fila_medios_izquierda
+   405 00000433 EB00                    	jmp realizar_movimiento_medios_izquierda 	
+   406                                  
+   407                                  
+   408                                  realizar_movimiento_medios_izquierda:
+   409 00000435 61                      	popa
+   410 00000436 89CE                    	mov esi,ecx
+   411 00000438 C704B000000000          	mov dword[eax+esi*4], 0
+   412 0000043F 46                      	inc esi 
+   413 00000440 C704B320000000          	mov dword[ebx+esi*4], ' '
+   414 00000447 83EE02                  	sub esi, 2
+   415 0000044A C704B33C000000          	mov dword[ebx+esi*4], '<'
+   416 00000451 C704B007000000          	mov dword[eax+esi*4], 7
+   417 00000458 83C102                  	add ecx, 2
+   418 0000045B E99CFEFFFF              	jmp for_automoviles
+   419                                  
+   420                                  continuar_fila_medios_izquierda:
+   421 00000460 61                      	popa
+   422 00000461 89CE                    	mov esi,ecx
+   423 00000463 C704B320000000          	mov dword[ebx+esi*4], ' '
+   424 0000046A C704B000000000          	mov dword[eax+esi*4], 0
+   425 00000471 46                      	inc esi 
+   426 00000472 C704B320000000          	mov dword[ebx+esi*4], ' '
+   427 00000479 C704B000000000          	mov dword[eax+esi*4], 0
+   428 00000480 83C60D                  	add esi, 13
+   429 00000483 C704B33C000000          	mov dword[ebx+esi*4], '<'
+   430 0000048A C704B008000000          	mov dword[eax+esi*4], 8
+   431 00000491 83C102                  	add ecx , 2
+   432 00000494 E963FEFFFF              	jmp for_automoviles
+   433                                  	
+   434                                  
+   435                                  
+   436                                  mover_lentos_derecha:
+   437 00000499 60                      	pusha
+   438 0000049A E826010000              	call modulo_derecha_autos
+   439 0000049F 83FA00                  	cmp edx,0 
+   440 000004A2 742F                    	jz continuar_fila_lentos_derecha
+   441 000004A4 EB00                    	jmp realizar_movimiento_lentos_derecha	
+   442                                  
+   443                                  
+   444                                  realizar_movimiento_lentos_derecha:
+   445 000004A6 61                      	popa
+   446 000004A7 89CE                    	mov esi,ecx
+   447 000004A9 C704B000000000          	mov dword[eax+esi*4], 0
+   448 000004B0 83EE02                  	sub esi, 2 
+   449 000004B3 C704B320000000          	mov dword[ebx+esi*4], ' '
+   450 000004BA 83C603                  	add esi, 3
+   451 000004BD C704B33E000000          	mov dword[ebx+esi*4], '>'
+   452 000004C4 C704B00C000000          	mov dword[eax+esi*4], 12
+   453 000004CB 83C103                  	add ecx, 3
+   454 000004CE E929FEFFFF              	jmp for_automoviles
+   455                                  
+   456                                  continuar_fila_lentos_derecha:
+   457 000004D3 61                      	popa
+   458 000004D4 89CE                    	mov esi,ecx
+   459 000004D6 C704B320000000          	mov dword[ebx+esi*4], ' '
+   460 000004DD C704B000000000          	mov dword[eax+esi*4], 0
+   461 000004E4 4E                      	dec esi 
+   462 000004E5 C704B320000000          	mov dword[ebx+esi*4], ' '
+   463 000004EC 4E                      	dec esi
+   464 000004ED C704B320000000          	mov dword[ebx+esi*4], ' ' 
+   465 000004F4 83EE0C                  	sub esi, 12
+   466 000004F7 C704B33E000000          	mov dword[ebx+esi*4], '>'
+   467 000004FE C704B00D000000          	mov dword[eax+esi*4], 13
+   468 00000505 83C103                  	add ecx , 3
+   469 00000508 E9EFFDFFFF              	jmp for_automoviles
+   470                                  	
+   471                                  		
+   472                                  mover_derecha:
+   473 0000050D 5F                            pop edi
+   474 0000050E 5B                            pop ebx
+   475 0000050F E8D7000000                    call modulo_derecha
+   476 00000514 89DA                          mov edx,ebx
+   477 00000516 B8[00000000]                  mov eax,tablero
+   478 0000051B 893C98                        mov dword[eax+ebx*4],edi
+   479 0000051E 43                            inc ebx
+   480 0000051F B8[00000000]                  mov eax,tablero
+   481 00000524 8B3C98                        mov edi,dword[eax+ebx*4]
+   482 00000527 C704986F000000                mov dword[eax+ebx*4],'o'
+   483 0000052E 53                            push ebx
+   484 0000052F 57                            push edi 
+   485 00000530 E9B9FDFFFF                    jmp mover_automoviles
+   486                                        
+   487                                  mover_abajo:
+   488 00000535 5F                      	  pop edi
+   489 00000536 5B                            pop ebx
+   490 00000537 E8D2000000                    call verificar_abajo
+   491 0000053C B8[00000000]                  mov eax,tablero
+   492 00000541 893C98                        mov dword[eax+ebx*4],edi
+   493 00000544 B90F000000                    mov ecx,columnas
+   494 00000549 01CB                          add ebx,ecx
+   495 0000054B B8[00000000]                  mov eax,tablero
+   496 00000550 8B3C98                        mov edi,dword[eax+ebx*4]
+   497 00000553 C704986F000000                mov dword[eax+ebx*4],'o'
+   498 0000055A 53                            push ebx
+   499 0000055B 57                      	  push edi 
+   500 0000055C E98DFDFFFF              	  jmp mover_automoviles
+   501                                  	  
+   502                                  mover_arriba:
+   503 00000561 5F                      	  pop edi
+   504 00000562 5B                            pop ebx
+   505 00000563 E897000000                    call verificar_arriba
+   506 00000568 B8[00000000]                  mov eax,tablero 
+   507 0000056D 893C98                        mov dword[eax+ebx*4],edi
+   508 00000570 B90F000000                    mov ecx,columnas
+   509 00000575 29CB                    	  sub ebx,ecx
+   510 00000577 B8[00000000]            	  mov eax,tablero
+   511 0000057C 8B3C98                  	  mov edi,dword[eax+ebx*4]
+   512 0000057F C704986F000000                mov dword[eax+ebx*4],'o'
+   513 00000586 53                            push ebx
+   514 00000587 57                      	  push edi 
+   515 00000588 E961FDFFFF              	  jmp mover_automoviles
+   516                                  	  
+   517                                  mover_izquierda:
+   518 0000058D 5F                            pop edi
+   519 0000058E 5B                            pop ebx
+   520 0000058F E840000000                    call modulo_izquierda
+   521 00000594 B8[00000000]                  mov eax,tablero
+   522 00000599 893C98                        mov dword[eax+ebx*4],edi
+   523 0000059C 4B                      	  dec ebx
+   524 0000059D B8[00000000]            	  mov eax, tablero 
+   525 000005A2 8B3C98                  	  mov edi,dword[eax+ebx*4]
+   526 000005A5 C704986F000000                mov dword[eax+ebx*4],'o'
+   527 000005AC 53                            push ebx
+   528 000005AD 57                            push edi 
+   529 000005AE E93BFDFFFF                    jmp mover_automoviles
+   530                                        
+   531                                  modulo_izquierda_autos:         ; calcs eax mod ebx, returns eax
+   532 000005B3 31D2                        xor edx,edx
+   533 000005B5 89C8                        mov eax,ecx
+   534 000005B7 48                          dec eax
+   535 000005B8 83E80E                      sub eax, 14
+   536 000005BB BB0F000000                  mov ebx, 15
+   537 000005C0 F7F3                    	div ebx
+   538 000005C2 89D0                    	mov eax,edx
+   539 000005C4 C3                      	ret
+   540                                  
+   541                                  modulo_derecha_autos:         ; calcs eax mod ebx, returns eax
+   542 000005C5 31D2                        xor edx,edx
+   543 000005C7 89C8                        mov eax,ecx
+   544 000005C9 40                          inc eax
+   545 000005CA BB0F000000                  mov ebx, 15
+   546 000005CF F7F3                    	div ebx
+   547 000005D1 89D0                    	mov eax,edx
+   548 000005D3 C3                      	ret
+   549                                        
+   550                                   modulo_izquierda:         ; calcs eax mod ebx, returns eax
+   551 000005D4 31D2                        xor edx,edx
+   552 000005D6 89D8                        mov eax,ebx
+   553 000005D8 48                          dec eax
+   554 000005D9 83E80E                      sub eax, 14
+   555 000005DC B90F000000                  mov ecx, 15
+   556 000005E1 F7F1                    	div ecx
+   557 000005E3 89D0                    	mov eax,edx
+   558 000005E5 83FA00                      cmp edx, 0
+   559 000005E8 7441                        jz push_print
+   560 000005EA C3                          ret 
+   561                                      
+   562                                   modulo_derecha:         ; calcs eax mod ebx, returns eax
+   563 000005EB 31D2                        xor edx,edx
+   564 000005ED 89D8                        mov eax,ebx
+   565 000005EF 40                          inc eax
+   566 000005F0 B90F000000                  mov ecx, 15
+   567 000005F5 F7F1                    	div ecx
+   568 000005F7 89D0                    	mov eax,edx
+   569 000005F9 83FA00                      cmp edx, 0
+   570 000005FC 742D                        jz push_print
+   571 000005FE C3                          ret 
+   572                                  
+   573                                  verificar_arriba:
+   574 000005FF B90F000000              	mov ecx,columnas
+   575 00000604 89D8                    	mov eax,ebx
+   576 00000606 29C8                    	sub eax,ecx
+   577 00000608 83F800                  	cmp eax, 0 
+   578 0000060B 7C1E                    	jl push_print
+   579 0000060D C3                      	ret
+   580                                  
+   581                                  verificar_abajo:
+   582 0000060E B90F000000              	mov ecx,columnas
+   583 00000613 89D8                    	mov eax,ebx
+   584 00000615 01C8                        add eax,ecx
+   585 00000617 3DC2000000              	cmp eax, 194
+   586 0000061C 7F0D                    	jg push_print
+   587 0000061E C3                      	ret
+   588                                  
+   589                                  
+   590                                  es_par:         ; calcs eax mod ebx, returns eax
+   591 0000061F 31D2                        xor edx,edx
+   592 00000621 BF02000000                  mov edi, 2
+   593 00000626 F7F7                    	div edi
+   594 00000628 89D0                    	mov eax,edx
+   595 0000062A C3                          ret 
+   596                                  
+   597                                  push_print:
+   598 0000062B 53                      	push ebx
+   599 0000062C 57                      	push edi 
+   600 0000062D E9B1FAFFFF              	jmp print
+   601                                  
+   602                                  
+   603                                  opcion_no_valida_inicial:
+   604 00000632 B9[00000000]                  mov ecx,men_opcion_no_valida
+   605 00000637 BA1C000000                    mov edx,len_opcion_no_valida
+   606 0000063C E875FBFFFF                    call display_text
+   607 00000641 E99DFAFFFF              	jmp print
+   608                                  
+   609                                  
+   610                                  
+   611                                  finalizar:
+   612 00000646 BB00000000                  mov ebx,0
+   613 0000064B B801000000                  mov eax,1
+   614 00000650 CD80                        int 0x80
+   615                                        
+   616                                        
