@@ -1,10 +1,9 @@
 columnas equ 15
 filas equ 13
-
-stdout_read equ 0
 sys_write equ 4 
 stdout equ 1
 sys_exit    equ     1
+sys_read equ 3
 stdin       equ     0
 stderr      equ     3
 
@@ -13,6 +12,34 @@ SECTION .data
 
 men_opcion_no_valida: db "Opcion ingresada no valida.",0x0A
 len_opcion_no_valida: equ $-men_opcion_no_valida
+
+mensaje_menu: db "Comenzar juego nuevo(n) o finalizar(f)?",0x0A
+len_mensaje_menu: equ $-mensaje_menu
+
+perdio: db " __   __            _                 _  ",0x0A 
+len_perdio: equ $-perdio
+perdio1: db " \ \ / /___  _  _  | | ___  ___ ___  | |  ",0x0A
+len_perdio1: equ $-perdio1
+perdio2: db  "  \ V // _ \| || | | |/ _ \(_-</ -_) |_|  ",0x0A
+len_perdio2: equ $-perdio2
+perdio3: db   "   |_| \___/ \_,_| |_|\___//__/\___| (_)  ",0x0A
+len_perdio3: equ $-perdio3
+
+
+gano: db "  ____    ____  ______    __    __     ____    __    ____  __  .__   __.  __           ___" ,0x0A
+len_gano: equ $-gano
+gano1: db "  \   \  /   / /  __  \  |  |  |  |    \   \  /  \  /   / |  | |  \ |  | |  |     _    \  \ " ,0x0A
+len_gano1: equ $-gano1
+gano2: db  "   \   \/   / |  |  |  | |  |  |  |     \   \/    \/   /  |  | |   \|  | |  |    (_)    |  |" ,0x0A
+len_gano2: equ $-gano2
+gano3: db   "    \_    _/  |  |  |  | |  |  |  |      \            /   |  | |  . `  | |  |           |  |" ,0x0A
+len_gano3: equ $-gano3
+gano4: db   "      |  |    |  `--'  | |  `--'  |       \    /\    /    |  | |  |\   | |__|     _     |  |" ,0x0A
+len_gano4: equ $-gano4
+gano5: db   "      |__|     \______/   \______/         \__/  \__/     |__| |__| \__| (__)    (_)    |  |" ,0x0A
+len_gano5: equ $-gano5
+gano6: db     "                                                                                       /__/ " ,0x0A
+len_gano6: equ $-gano6
 
 salto: dd 0xa, 0xd
 sal_len: equ $-salto
@@ -29,6 +56,7 @@ SECTION .bss
 	tablero resb 980100 
 	tablero_log resb 980100                   
 	movimiento resb 2   
+
 	  
 		
 SECTION .text
@@ -41,6 +69,7 @@ _start:
 
 crear_matriz:
 	xor ecx,ecx
+	xor edx, edx
 	xor eax,eax
 	xor ebx,ebx
 	mov ebx,tablero
@@ -153,7 +182,7 @@ print:
 	mov ecx, ClearTerm                  ; Pass offset of terminal control string
 	mov edx, CLEARLEN                   ; Pass the length of terminal control string
 	int 80h
-    mov     esi,tablero                
+    mov     esi,tablero
     mov     ecx,filas
     mov     edx,columnas
     imul    ecx,edx
@@ -172,7 +201,7 @@ print:
 
 .continue:
     push    eax                  
-    mov     ecx,[esi]                                                                             
+    mov     ecx,[esi]                                                            
     push    ecx                          
     mov     ecx, esp    
     mov     edx, 1                 
@@ -281,8 +310,84 @@ colocar_automoviles:
 	mov ebx, 106
 	mov dword[eax+ebx*4], '>'
 	mov dword[ecx+ebx*4], 3
+	jmp colocar_troncos
+
+
+colocar_troncos:
+	mov ebx, 18
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 22
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 26
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 47
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "1"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 51 
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "1"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 55
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "1"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 77
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 81
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_'
+	mov ebx, 85
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "3"
+	inc ebx
+	mov dword[eax+ebx*4], '_' 
+	mov ebx,30
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "5"
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	mov ebx ,37
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "5"
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	mov ebx ,65
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "5"
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	mov ebx ,70
+	mov dword[eax+ebx*4], '_'
+	mov dword[ecx+ebx*4], "5"
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
+	inc ebx 
+	mov dword[eax+ebx*4], '_'
 	jmp print
-	
 
 mover_automoviles:
 	mov eax,tablero_log
@@ -291,11 +396,11 @@ mover_automoviles:
 	jmp for_automoviles
 
 for_automoviles:
-	mov edx,filas
-	imul edx, columnas
-	cmp ecx,edx
-	jl mover_objetos
-	jmp print
+	  mov edx,filas
+	  imul edx, columnas
+	  cmp ecx,edx
+	  jl mover_objetos
+	  jmp print
 
 mover_objetos:
 	cmp dword[eax+ecx*4],1
@@ -322,9 +427,182 @@ mover_objetos:
 	jz rapido_bandera
 	cmp dword[eax+ecx*4],10
 	jz rapido_bandera
+	cmp dword[eax+ecx*4],"1"
+	jz mover_troncos_rapidos_izquierda
+	cmp dword[eax+ecx*4],"2"
+	jz rapido_bandera
+	cmp dword[eax+ecx*4],"3"
+	jz mover_troncos_rapidos_derecha
+	cmp dword[eax+ecx*4],"4"
+	jz esquina_tronco_derecha
+	cmp dword[eax+ecx*4],"5"
+	jz mover_troncos_medio_derecha
+	cmp dword[eax+ecx*4],"6"
+	jz rapido_bandera
+	cmp dword[eax+ecx*4],"7"
+	jz esquina_tronco_medio_derecha
 	inc ecx
 	jmp for_automoviles
 
+	
+
+esquina_tronco_derecha:
+	mov esi,ecx
+	dec esi
+	mov dword[ebx+esi*4], '~'
+	inc esi
+	mov dword[eax+esi*4], 0
+	mov dword[ebx+esi*4], '_'
+	mov dword[eax+esi*4], "3"
+	inc esi 
+	mov dword[ebx+esi*4], '_'
+	add ecx, 2
+	jmp for_automoviles
+
+
+mover_troncos_rapidos_derecha:
+	inc ecx 
+	pusha
+	call modulo_derecha_autos
+	cmp edx,0 
+	jz continuar_fila_troncos_rapidos_derecha
+	jmp realizar_movimiento_troncos_rapidos_derecha	
+
+
+realizar_movimiento_troncos_rapidos_derecha:
+	popa
+	dec ecx
+	mov esi,ecx
+	dec esi
+	mov dword[ebx+esi*4], '~'
+	inc esi
+	mov dword[eax+esi*4], 0
+	mov dword[ebx+esi*4], '~'
+	inc esi 
+	mov dword[eax+esi*4], "3"
+	inc esi 
+	mov dword[ebx+esi*4], '_'
+	add ecx, 2
+	jmp for_automoviles
+
+continuar_fila_troncos_rapidos_derecha:
+	popa
+	dec ecx
+	mov esi,ecx
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	inc esi 
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	sub esi, 13
+	mov dword[ebx+esi*4], '_'
+	mov dword[eax+esi*4], "4"
+	dec esi 
+	mov dword[ebx+esi*4], '_'
+	add ecx , 2
+	jmp for_automoviles
+
+
+esquina_tronco_medio_derecha:
+	mov esi,ecx
+	dec esi
+	mov dword[ebx+esi*4], '~'
+	inc esi 
+	mov dword[eax+esi*4], "6"
+	inc esi 
+	mov dword[ebx+esi*4], '_'
+	inc esi 
+	mov dword[ebx+esi*4], '_'
+	add ecx, 3
+	jmp for_automoviles
+
+
+mover_troncos_medio_derecha:
+	add ecx, 2 
+	pusha
+	call modulo_derecha_autos
+	cmp edx,0 
+	jz continuar_fila_troncos_medio_derecha
+	jmp realizar_movimiento_troncos_medio_derecha	
+
+
+realizar_movimiento_troncos_medio_derecha:
+	popa
+	sub ecx, 2
+	mov esi,ecx
+	dec esi
+	mov dword[ebx+esi*4], '~'
+	inc esi
+	mov dword[eax+esi*4], "0"
+	mov dword[ebx+esi*4], '~'
+	inc esi 
+	mov dword[eax+esi*4], "6"
+	add esi, 2 
+	mov dword[ebx+esi*4], '_'
+	add ecx, 3
+	jmp for_automoviles
+
+continuar_fila_troncos_medio_derecha:
+	popa
+	sub ecx, 2
+	mov esi,ecx
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	inc esi 
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	inc esi 
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	sub esi, 13
+	mov dword[ebx+esi*4], '_'
+	mov dword[eax+esi*4], "7"
+	dec esi 
+	mov dword[ebx+esi*4], '_'
+	add esi, 2 
+	mov dword[ebx+esi*4], '_'
+	add ecx , 3
+	jmp for_automoviles
+
+
+mover_troncos_rapidos_izquierda:
+	pusha
+	call modulo_izquierda_autos
+	cmp edx,0 
+	jz continuar_fila_troncos_rapidos_izquierda
+	jmp realizar_movimiento_troncos_rapidos_izquierda
+
+
+realizar_movimiento_troncos_rapidos_izquierda:
+	popa
+	mov esi,ecx
+	inc esi
+	mov dword[ebx+esi*4], '~'
+	dec esi
+	mov dword[eax+esi*4], 0
+	dec esi 
+	mov dword[eax+esi*4], "1"
+	mov dword[ebx+esi*4], '_'
+	inc ecx
+	jmp for_automoviles
+
+	
+
+continuar_fila_troncos_rapidos_izquierda:
+	popa
+	mov esi,ecx
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	inc esi 
+	mov dword[ebx+esi*4], '~'
+	mov dword[eax+esi*4], 0
+	add esi, 13
+	mov dword[ebx+esi*4], '_'
+	dec esi 
+	mov dword[eax+esi*4], "2"
+	mov dword[ebx+esi*4], '_'
+	inc ecx
+	jmp for_automoviles
 
 rapido_bandera:
 	mov edx,dword[eax+ecx*4]
@@ -348,6 +626,7 @@ realizar_movimiento:
 	mov dword[eax+ecx*4], 0
 	mov esi,ecx
 	dec esi 
+    call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '<'
 	mov dword[eax+esi*4], 1
 	inc ecx
@@ -359,6 +638,7 @@ continuar_fila:
 	mov dword[eax+ecx*4], 0
 	mov edx,ecx
 	add edx,14
+	call verificar_perdida_automovil
 	mov dword[ebx+edx*4], '<'
 	mov dword[eax+edx*4], 2
 	inc ecx
@@ -379,6 +659,7 @@ realizar_movimiento_derecha:
 	mov dword[eax+ecx*4], 0
 	mov esi,ecx
 	inc esi 
+	call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '>'
 	mov dword[eax+esi*4], 3
 	add ecx, 2
@@ -390,6 +671,7 @@ continuar_fila_derecha:
 	mov dword[eax+ecx*4], 0
 	mov edx,ecx
 	sub edx,14
+	call verificar_perdida_automovil
 	mov dword[ebx+edx*4], '>'
 	mov dword[eax+edx*4], 3
 	add ecx, 2
@@ -412,6 +694,7 @@ realizar_movimiento_medios_izquierda:
 	inc esi 
 	mov dword[ebx+esi*4], ' '
 	sub esi, 2
+	call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '<'
 	mov dword[eax+esi*4], 7
 	add ecx, 2
@@ -426,6 +709,7 @@ continuar_fila_medios_izquierda:
 	mov dword[ebx+esi*4], ' '
 	mov dword[eax+esi*4], 0
 	add esi, 13
+	call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '<'
 	mov dword[eax+esi*4], 8
 	add ecx , 2
@@ -448,6 +732,7 @@ realizar_movimiento_lentos_derecha:
 	sub esi, 2 
 	mov dword[ebx+esi*4], ' '
 	add esi, 3
+	call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '>'
 	mov dword[eax+esi*4], 12
 	add ecx, 3
@@ -463,12 +748,51 @@ continuar_fila_lentos_derecha:
 	dec esi
 	mov dword[ebx+esi*4], ' ' 
 	sub esi, 12
+	call verificar_perdida_automovil
 	mov dword[ebx+esi*4], '>'
 	mov dword[eax+esi*4], 13
 	add ecx , 3
 	jmp for_automoviles
-	
-		
+
+verificar_abajo_izquierda:
+	  mov eax,tablero
+	  mov edi,dword[eax+ebx*4]
+      call verificar_perdida_jugador
+      mov dword[eax+ebx*4],'o'
+      push ebx
+	  push edi 
+	  jmp mover_automoviles
+
+verificar_abajo_derecha:
+      mov edi,dword[eax+ebx*4]
+      inc ebx 
+	  mov eax,tablero
+      call verificar_perdida_jugador
+      mov dword[eax+ebx*4],'o'
+      push ebx
+	  push edi 
+	  jmp mover_automoviles
+
+
+verificar_arriba_izquierda:
+	  mov eax,tablero
+	  mov edi,dword[eax+ebx*4]
+      call verificar_perdida_jugador
+      mov dword[eax+ebx*4],'o'
+      push ebx
+	  push edi 
+	  jmp mover_automoviles
+
+verificar_arriba_derecha:
+      mov edi,dword[eax+ebx*4]
+      inc ebx 
+	  mov eax,tablero
+      call verificar_perdida_jugador
+      mov dword[eax+ebx*4],'o'
+      push ebx
+	  push edi 
+	  jmp mover_automoviles
+	  		
 mover_derecha:
       pop edi
       pop ebx
@@ -479,6 +803,7 @@ mover_derecha:
       inc ebx
       mov eax,tablero
       mov edi,dword[eax+ebx*4]
+      call verificar_perdida_jugador
       mov dword[eax+ebx*4],'o'
       push ebx
       push edi 
@@ -492,8 +817,16 @@ mover_abajo:
       mov dword[eax+ebx*4],edi
       mov ecx,columnas
       add ebx,ecx
+      mov esi, tablero_log 
+	  dec ebx  
+	  cmp dword[esi+ebx*4],"1"
+	  jz verificar_abajo_izquierda
+	  inc ebx
+	  cmp dword[esi+ebx*4],"3"
+	  jz verificar_abajo_derecha
       mov eax,tablero
       mov edi,dword[eax+ebx*4]
+      call verificar_perdida_jugador
       mov dword[eax+ebx*4],'o'
       push ebx
 	  push edi 
@@ -507,13 +840,25 @@ mover_arriba:
       mov dword[eax+ebx*4],edi
       mov ecx,columnas
 	  sub ebx,ecx
+	  cmp dword[eax+ebx*4],'|'
+	  jz hay_pared
+	  mov esi, tablero_log 
+	  dec ebx  
+	  cmp dword[esi+ebx*4],"1"
+	  jz verificar_arriba_izquierda
+	  inc ebx
+	  cmp dword[esi+ebx*4],"3"
+	  jz verificar_arriba_derecha
 	  mov eax,tablero
 	  mov edi,dword[eax+ebx*4]
+      call verificar_perdida_jugador
+      call verificar_gane
       mov dword[eax+ebx*4],'o'
       push ebx
 	  push edi 
 	  jmp mover_automoviles
-	  
+
+
 mover_izquierda:
       pop edi
       pop ebx
@@ -523,10 +868,19 @@ mover_izquierda:
 	  dec ebx
 	  mov eax, tablero 
 	  mov edi,dword[eax+ebx*4]
+	  call verificar_perdida_jugador
       mov dword[eax+ebx*4],'o'
       push ebx
       push edi 
       jmp mover_automoviles
+      
+      
+hay_pared:
+	mov ecx,columnas
+	add ebx,ecx
+	mov edi,'_'
+	mov dword[eax+ebx*4],'o'
+	jmp push_print
       
 modulo_izquierda_autos:         ; calcs eax mod ebx, returns eax
     xor edx,edx
@@ -604,8 +958,93 @@ opcion_no_valida_inicial:
       mov ecx,men_opcion_no_valida
       mov edx,len_opcion_no_valida
       call display_text
-	jmp print
+	  jmp print
 
+menu_inicial:
+      mov ecx,mensaje_menu
+      mov edx,len_mensaje_menu
+      call display_text
+
+	mov eax, 3
+	mov ebx, 0
+   	mov ecx, movimiento              
+   	mov edx, 2    
+    int 80h
+    mov ecx, [movimiento]
+	cmp ecx, 0xa6E
+    jz crear_matriz
+	cmp ecx, 0xa66
+    jz finalizar
+    
+
+verificar_gane:
+	cmp dword[eax+ebx*4],'x'
+	jz mensaje_gano
+	ret
+
+verificar_perdida_jugador:
+	cmp dword[eax+ebx*4],'<'
+	jz mensaje_perdio
+	cmp dword[eax+ebx*4],'>'
+	jz mensaje_perdio
+	cmp dword[eax+ebx*4],'~'
+	jz mensaje_perdio
+	ret
+
+verificar_perdida_automovil:
+	cmp dword[ebx+esi*4],'o'
+	jz mensaje_perdio
+	ret
+
+mensaje_perdio:
+	  mov eax, 4                          ; Specify sys_write call
+	  mov ebx, 1                          ; Specify File Descriptor 1: Stdout
+	  mov ecx, ClearTerm                  ; Pass offset of terminal control string
+	  mov edx, CLEARLEN                   ; Pass the length of terminal control string
+	  int 80h
+	  mov ecx,perdio
+      mov edx,len_perdio
+      call display_text
+      mov ecx,perdio1
+      mov edx,len_perdio1
+      call display_text
+      mov ecx,perdio2
+      mov edx,len_perdio2
+      call display_text
+      mov ecx,perdio3
+      mov edx,len_perdio3
+      call display_text
+      call print_endLine
+      jmp menu_inicial
+
+mensaje_gano:
+      mov eax, 4                          ; Specify sys_write call
+	  mov ebx, 1                          ; Specify File Descriptor 1: Stdout
+	  mov ecx, ClearTerm                  ; Pass offset of terminal control string
+	  mov edx, CLEARLEN                   ; Pass the length of terminal control string
+	  int 80h
+	  mov ecx,gano
+      mov edx,len_gano
+      call display_text
+      mov ecx,gano1
+      mov edx,len_gano1
+      call display_text
+	  mov ecx,gano2
+      mov edx,len_gano2
+      call display_text
+      mov ecx,gano3
+      mov edx,len_gano3
+      call display_text
+      mov ecx,gano4
+      mov edx,len_gano4
+      call display_text
+      mov ecx,gano5
+      mov edx,len_gano5
+      call display_text
+      mov ecx,gano6
+      mov edx,len_gano6
+      call display_text
+      jmp menu_inicial
 
 
 finalizar:
