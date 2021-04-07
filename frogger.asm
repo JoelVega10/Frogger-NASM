@@ -67,6 +67,8 @@ global _start
 _start:
 	nop
 
+;Etiqueta creada para preparar los registros antes de crear el tablero. 
+;Limpia los registros y deja en ebx el tablero.
 crear_matriz:
 	xor ecx,ecx
 	xor edx, edx
@@ -75,19 +77,23 @@ crear_matriz:
 	mov ebx,tablero
 
 
+;ForI es una etiqueta en donde ecx es el contador de filas del tablero, salta a forJ hasta que ecx sea igual al numero de filas.
 forI:
 	xor esi,esi
 	cmp ecx,filas
 	jl forJ
 	jmp crear_matriz_log
 
-
+;ForI es una etiqueta en donde esi es el contador de columnas del tablero, salta a initialization
+; hasta que esi sea igual al numero de columnas.
 forJ:
 	cmp esi,columnas
 	jl initialization
 	inc ecx
 	jmp forI
 
+
+;Esta etiqueta depende de la fila coloca un espacio vacio, agua, o camino en el tablero.
 initialization:  
 	mov eax,ecx                                              
 	cmp eax, 0
@@ -100,26 +106,30 @@ initialization:
 	jl agua
 	jmp espacio_libre
 	
+;Etiqueta creada para preparar los registros antes de crear el tablero logico. 
+;Limpia los registros y deja en ebx el tablero.
 crear_matriz_log:
 	xor ecx,ecx
 	xor eax,eax
 	xor ebx,ebx
 	mov ebx,tablero_log
 
-
+;ForI es una etiqueta en donde ecx es el contador de filas del tablero, salta a forJ2 hasta que ecx sea igual al numero de filas.
 forI2:
 	xor esi,esi
 	cmp ecx,filas
 	jl forJ2
 	jmp colocar_jugador
 
-
+;ForI es una etiqueta en donde esi es el contador de columnas del tablero, salta a initialization
+; hasta que esi sea igual al numero de columnas.
 forJ2:
 	cmp esi,columnas
 	jl initialization2
 	inc ecx
 	jmp forI2
 
+;Esta etiqueta esta encargada de colocar un 0 en cada posicion del tablero_log representando espacio vacio.
 initialization2:  
 	mov eax,ecx                                              
 	mul dword[max]
@@ -128,6 +138,7 @@ initialization2:
 	inc esi 
 	jmp forJ2
 
+;Coloca en el tablero la representacion del espacio libre.
 espacio_libre:
 	mul dword[max]
 	add eax,esi 
@@ -136,13 +147,14 @@ espacio_libre:
 	jmp forJ
 	
 
+;Coloca en el tablero la representacion del camino.
 camino:
 	mul dword[max]
 	add eax,esi 
 	mov dword[ebx + eax * 4],"="
 	inc esi 
 	jmp forJ
-
+;Coloca en el tablero la representacion del agua.
 agua:
 	mul dword[max]
 	add eax,esi 
@@ -150,6 +162,8 @@ agua:
 	inc esi 
 	jmp forJ
 
+;Coloca en el tablero la primera linea, en las posiciones impares una pared y en las pares una x que es donde hay que llegar para
+; ganar.
 primera_linea:
 	mul dword[max]
 	add eax,esi 
@@ -158,7 +172,8 @@ primera_linea:
 	jz pared
 	mov eax,ecx
 	jmp poner_x
-	
+
+;Coloca en el tablero la representacion de la pared.
 pared:
 	mul dword[max]
 	add eax,esi 
@@ -166,7 +181,7 @@ pared:
 	inc esi 
 	jmp forJ
 	
-	
+;Coloca en el tablero la representacion del objeto de gane de juego.	
 poner_x:
  	mov eax,ecx
 	mul dword[max]
@@ -175,7 +190,7 @@ poner_x:
 	inc esi
 	jmp forJ 
 	
-
+;Etiqueta utilizada para imprimir el tablero en forma de matriz
 print:
 	mov eax, 4                          ; Specify sys_write call
 	mov ebx, 1                          ; Specify File Descriptor 1: Stdout
@@ -191,6 +206,8 @@ print:
     mov     edi, ebx             
     mov     eax, 1
 
+;Verifica si hay que imprimir un salto de linea cuando el contador sea igual al numero de filas.
+;para que se imprima como matriz.
 .PrintArray:
     mov     ebx,columnas
     inc     ebx
@@ -199,6 +216,7 @@ print:
     call    print_endLine
     jmp     .continue
 
+;imprime el elemento que se encuentre en la posicion actual del tablero.
 .continue:
     push    eax                  
     mov     ecx,[esi]                                                            
@@ -215,12 +233,14 @@ print:
     inc     eax
     dec     edi                             
     jns     .PrintArray   
-                     
+
+;termina de imprimir y llama a preguntar_movimiento.                    
 done:
      call print_endLine
      jmp preguntar_movimiento
 
 
+;Recibe input del teclado y de acuerdo a la letra recibida hace un movimiento o imprime letra invalida.
 preguntar_movimiento:
       mov eax, 3
 	  mov ebx, 0
@@ -238,7 +258,7 @@ preguntar_movimiento:
       jz mover_izquierda
       jmp opcion_no_valida_inicial
 
-
+;Llamada para imprimir un salto de linea.
 print_endLine:
     mov ecx, salto
     mov edx, sal_len
@@ -246,13 +266,15 @@ print_endLine:
     int 0x80
     mov eax, 1
     ret
-
+    
+;Llamada para imprimir un caracter.
 display_text:
 	mov eax,sys_write
 	mov ebx, stdout
 	int 80h
 	ret
 
+;coloca el jugador en la posicion inicial del tablero.
 colocar_jugador:
 	mov eax,tablero
 	mov ebx, 187
@@ -262,7 +284,7 @@ colocar_jugador:
 	push edi 
 	jmp colocar_automoviles
 
-
+;coloca los automoviles en la posicion inicial del tablero.
 colocar_automoviles:
 	mov eax,tablero
 	mov ecx,tablero_log
@@ -312,7 +334,7 @@ colocar_automoviles:
 	mov dword[ecx+ebx*4], 3
 	jmp colocar_troncos
 
-
+;coloca los troncos en la posicion inicial del tablero.
 colocar_troncos:
 	mov ebx, 18
 	mov dword[eax+ebx*4], '_'
@@ -389,12 +411,14 @@ colocar_troncos:
 	mov dword[eax+ebx*4], '_'
 	jmp print
 
+;etiqueta que recorre el tablero logico para realizar movimiento de los vehiculos en el tablero que se imprime en consola.
 mover_automoviles:
 	mov eax,tablero_log
 	mov ebx, tablero
 	xor ecx, ecx
 	jmp for_automoviles
 
+;etiqueta para recorrer el tablero logico.
 for_automoviles:
 	  mov edx,filas
 	  imul edx, columnas
@@ -402,6 +426,7 @@ for_automoviles:
 	  jl mover_objetos
 	  jmp print
 
+;Determina cuando debe mover un automovil y a que direccion.
 mover_objetos:
 	cmp dword[eax+ecx*4],1
 	jz mover_rapidos_izquierda
@@ -445,7 +470,7 @@ mover_objetos:
 	jmp for_automoviles
 
 	
-
+;etiqueta para comprobar si un tronco debe reiniciar la posicion si llega a el final de la fila.
 esquina_tronco_derecha:
 	mov esi,ecx
 	dec esi
@@ -460,6 +485,7 @@ esquina_tronco_derecha:
 	jmp for_automoviles
 
 
+;etiqueta para mover los troncos de tamaño dos a la derecha.
 mover_troncos_rapidos_derecha:
 	inc ecx 
 	pusha
@@ -468,7 +494,7 @@ mover_troncos_rapidos_derecha:
 	jz continuar_fila_troncos_rapidos_derecha
 	jmp realizar_movimiento_troncos_rapidos_derecha	
 
-
+;realiza el movimiento de los troncos de tamaño dos a la derecha.
 realizar_movimiento_troncos_rapidos_derecha:
 	popa
 	dec ecx
@@ -485,6 +511,7 @@ realizar_movimiento_troncos_rapidos_derecha:
 	add ecx, 2
 	jmp for_automoviles
 
+;verifica si los troncos de tamaño dos llegan al final de la fila y deben devolverse.
 continuar_fila_troncos_rapidos_derecha:
 	popa
 	dec ecx
@@ -502,7 +529,7 @@ continuar_fila_troncos_rapidos_derecha:
 	add ecx , 2
 	jmp for_automoviles
 
-
+;etiqueta para comprobar si un tronco de tamaño 3 debe reiniciar la posicion si llega a el final de la fila.
 esquina_tronco_medio_derecha:
 	mov esi,ecx
 	dec esi
@@ -516,7 +543,7 @@ esquina_tronco_medio_derecha:
 	add ecx, 3
 	jmp for_automoviles
 
-
+;etiqueta para mover los troncos de tamaño tres a la derecha.
 mover_troncos_medio_derecha:
 	add ecx, 2 
 	pusha
@@ -525,7 +552,7 @@ mover_troncos_medio_derecha:
 	jz continuar_fila_troncos_medio_derecha
 	jmp realizar_movimiento_troncos_medio_derecha	
 
-
+;realiza el movimiento de los troncos de tamaño tres a la derecha.
 realizar_movimiento_troncos_medio_derecha:
 	popa
 	sub ecx, 2
@@ -541,7 +568,7 @@ realizar_movimiento_troncos_medio_derecha:
 	mov dword[ebx+esi*4], '_'
 	add ecx, 3
 	jmp for_automoviles
-
+;verifica si los troncos de tamaño tres llegan al final de la fila y deben devolverse.
 continuar_fila_troncos_medio_derecha:
 	popa
 	sub ecx, 2
@@ -564,7 +591,7 @@ continuar_fila_troncos_medio_derecha:
 	add ecx , 3
 	jmp for_automoviles
 
-
+;etiqueta para mover los troncos de tamaño dos a la izquierda.
 mover_troncos_rapidos_izquierda:
 	pusha
 	call modulo_izquierda_autos
@@ -572,7 +599,7 @@ mover_troncos_rapidos_izquierda:
 	jz continuar_fila_troncos_rapidos_izquierda
 	jmp realizar_movimiento_troncos_rapidos_izquierda
 
-
+;realiza el movimiento de los troncos de tamaño dos a la izquierda.
 realizar_movimiento_troncos_rapidos_izquierda:
 	popa
 	mov esi,ecx
@@ -587,7 +614,7 @@ realizar_movimiento_troncos_rapidos_izquierda:
 	jmp for_automoviles
 
 	
-
+;etiqueta para comprobar si un tronco debe reiniciar la posicion si llega a el final de la fila.
 continuar_fila_troncos_rapidos_izquierda:
 	popa
 	mov esi,ecx
@@ -604,6 +631,7 @@ continuar_fila_troncos_rapidos_izquierda:
 	inc ecx
 	jmp for_automoviles
 
+;etiqueta para cambiar valor del valor logico de un automovil.
 rapido_bandera:
 	mov edx,dword[eax+ecx*4]
 	dec edx
@@ -611,7 +639,7 @@ rapido_bandera:
 	inc ecx 
 	jmp for_automoviles 
 	
-
+;mueve los automoviles de tamaño uno a la izquierda.
 mover_rapidos_izquierda:
 	pusha
 	call modulo_izquierda_autos
@@ -619,7 +647,7 @@ mover_rapidos_izquierda:
 	jz continuar_fila
 	jmp realizar_movimiento 	
 
-
+;realiza el movimiento del automovil de tamaño uno a la izquierda
 realizar_movimiento:
 	popa
 	mov dword[ebx+ecx*4], ' ' 
@@ -632,6 +660,7 @@ realizar_movimiento:
 	inc ecx
 	jmp for_automoviles
 
+;verifica si los automoviles llegan al final de la fila para reiniciar la posicion.
 continuar_fila:
 	popa
 	mov dword[ebx+ecx*4], ' '
@@ -644,7 +673,7 @@ continuar_fila:
 	inc ecx
 	jmp for_automoviles
 	
-
+;mueve los automoviles de tamaño uno a la derecha.
 mover_rapidos_derecha:
 	pusha
 	call modulo_derecha_autos
@@ -652,8 +681,8 @@ mover_rapidos_derecha:
 	jz continuar_fila_derecha
 	jmp realizar_movimiento_derecha 
 
-
-realizar_movimiento_derecha:
+;realiza el movimiento del automovil de tamaño uno a la derecha
+realizar_movimiento_derecha
 	popa
 	mov dword[ebx+ecx*4], ' '
 	mov dword[eax+ecx*4], 0
@@ -664,7 +693,8 @@ realizar_movimiento_derecha:
 	mov dword[eax+esi*4], 3
 	add ecx, 2
 	jmp for_automoviles
-
+	
+;verifica si los automoviles llegan al final de la fila para reiniciar la posicion.
 continuar_fila_derecha:
 	popa
 	mov dword[ebx+ecx*4], ' '
@@ -678,7 +708,7 @@ continuar_fila_derecha:
 	jmp for_automoviles
 
 
-
+;mueve los automoviles de tamaño dos a la izquierda.
 mover_medios_izquierda:
 	pusha
 	call modulo_izquierda_autos
@@ -686,7 +716,7 @@ mover_medios_izquierda:
 	jz continuar_fila_medios_izquierda
 	jmp realizar_movimiento_medios_izquierda 	
 
-
+;realiza el movimiento del automovil de tamaño dos a la izquierda
 realizar_movimiento_medios_izquierda:
 	popa
 	mov esi,ecx
@@ -699,7 +729,7 @@ realizar_movimiento_medios_izquierda:
 	mov dword[eax+esi*4], 7
 	add ecx, 2
 	jmp for_automoviles
-
+;verifica si los automoviles llegan al final de la fila para reiniciar la posicion.
 continuar_fila_medios_izquierda:
 	popa
 	mov esi,ecx
@@ -716,7 +746,7 @@ continuar_fila_medios_izquierda:
 	jmp for_automoviles
 	
 
-
+;mueve los automoviles de tamaño tres a la derecha.
 mover_lentos_derecha:
 	pusha
 	call modulo_derecha_autos
@@ -724,7 +754,7 @@ mover_lentos_derecha:
 	jz continuar_fila_lentos_derecha
 	jmp realizar_movimiento_lentos_derecha	
 
-
+;realiza el movimiento del automovil de tamaño tres a la derecha
 realizar_movimiento_lentos_derecha:
 	popa
 	mov esi,ecx
@@ -737,7 +767,7 @@ realizar_movimiento_lentos_derecha:
 	mov dword[eax+esi*4], 12
 	add ecx, 3
 	jmp for_automoviles
-
+;verifica si los automoviles llegan al final de la fila para reiniciar la posicion.
 continuar_fila_lentos_derecha:
 	popa
 	mov esi,ecx
@@ -753,7 +783,8 @@ continuar_fila_lentos_derecha:
 	mov dword[eax+esi*4], 13
 	add ecx , 3
 	jmp for_automoviles
-
+	
+;llamada para verifiar si al moverse abajo izquierda se pierde el juego.
 verificar_abajo_izquierda:
 	  mov eax,tablero
 	  mov edi,dword[eax+ebx*4]
@@ -762,7 +793,7 @@ verificar_abajo_izquierda:
       push ebx
 	  push edi 
 	  jmp mover_automoviles
-
+;llamada para verifiar si al moverse abajo derecha se pierde el juego.
 verificar_abajo_derecha:
       mov edi,dword[eax+ebx*4]
       inc ebx 
@@ -773,7 +804,7 @@ verificar_abajo_derecha:
 	  push edi 
 	  jmp mover_automoviles
 
-
+;llamada para verifiar si al moverse arriba izquierda se pierde el juego.
 verificar_arriba_izquierda:
 	  mov eax,tablero
 	  mov edi,dword[eax+ebx*4]
@@ -782,7 +813,7 @@ verificar_arriba_izquierda:
       push ebx
 	  push edi 
 	  jmp mover_automoviles
-
+;llamada para verifiar si al moverse arriba derecha se pierde el juego.
 verificar_arriba_derecha:
       mov edi,dword[eax+ebx*4]
       inc ebx 
@@ -792,7 +823,8 @@ verificar_arriba_derecha:
       push ebx
 	  push edi 
 	  jmp mover_automoviles
-	  		
+
+;etiqueta para mover al jugador a la derecha. 		
 mover_derecha:
       pop edi
       pop ebx
@@ -808,7 +840,7 @@ mover_derecha:
       push ebx
       push edi 
       jmp mover_automoviles
-      
+;etiqueta para mover al jugador a la abajo. 	      
 mover_abajo:
 	  pop edi
       pop ebx
@@ -831,7 +863,7 @@ mover_abajo:
       push ebx
 	  push edi 
 	  jmp mover_automoviles
-	  
+;etiqueta para mover al jugador a la arriba. 		  
 mover_arriba:
 	  pop edi
       pop ebx
@@ -858,7 +890,7 @@ mover_arriba:
 	  push edi 
 	  jmp mover_automoviles
 
-
+;etiqueta para mover al jugador a la izquierda. 	
 mover_izquierda:
       pop edi
       pop ebx
@@ -874,14 +906,14 @@ mover_izquierda:
       push edi 
       jmp mover_automoviles
       
-      
+;etiqueta para verificar si hay pared al realizar un movimiento. 	      
 hay_pared:
 	mov ecx,columnas
 	add ebx,ecx
 	mov edi,'_'
 	mov dword[eax+ebx*4],'o'
 	jmp push_print
-      
+;etiqueta para verificar si al moverse los autos a la izquierda se pasa de fila. 	    
 modulo_izquierda_autos:         ; calcs eax mod ebx, returns eax
     xor edx,edx
     mov eax,ecx
@@ -891,7 +923,7 @@ modulo_izquierda_autos:         ; calcs eax mod ebx, returns eax
 	div ebx
 	mov eax,edx
 	ret
-
+;etiqueta para verificar si al moverse los autos a la derecha se pasa de fila. 	   
 modulo_derecha_autos:         ; calcs eax mod ebx, returns eax
     xor edx,edx
     mov eax,ecx
@@ -900,7 +932,7 @@ modulo_derecha_autos:         ; calcs eax mod ebx, returns eax
 	div ebx
 	mov eax,edx
 	ret
-      
+ ;etiqueta para verificar si al moverse a la izquierda se pasa de fila el jugador. 	       
  modulo_izquierda:         ; calcs eax mod ebx, returns eax
     xor edx,edx
     mov eax,ebx
@@ -912,7 +944,7 @@ modulo_derecha_autos:         ; calcs eax mod ebx, returns eax
     cmp edx, 0
     jz push_print
     ret 
-    
+ ;etiqueta para verificar si al moverse a la derecha se pasa de fila el jugador. 	   
  modulo_derecha:         ; calcs eax mod ebx, returns eax
     xor edx,edx
     mov eax,ebx
@@ -923,7 +955,7 @@ modulo_derecha_autos:         ; calcs eax mod ebx, returns eax
     cmp edx, 0
     jz push_print
     ret 
-
+;etiqueta para verificar si al moverse arriba se sale del tablero. 	   
 verificar_arriba:
 	mov ecx,columnas
 	mov eax,ebx
@@ -931,7 +963,7 @@ verificar_arriba:
 	cmp eax, 0 
 	jl push_print
 	ret
-
+;etiqueta para verificar si al moverse abajo se sale del tablero. 	   
 verificar_abajo:
 	mov ecx,columnas
 	mov eax,ebx
@@ -940,26 +972,26 @@ verificar_abajo:
 	jg push_print
 	ret
 
-
+;llamada para verifica si una posicion del tablero es par
 es_par:         ; calcs eax mod ebx, returns eax
     xor edx,edx
     mov edi, 2
 	div edi
 	mov eax,edx
     ret 
-
+;llamada para mantener el jugador en la misma posicion
 push_print:
 	push ebx
 	push edi 
 	jmp print
 
-
+;llamada para mostrar input invalido
 opcion_no_valida_inicial:
       mov ecx,men_opcion_no_valida
       mov edx,len_opcion_no_valida
       call display_text
 	  jmp print
-
+;despliega el menu de reiniciar o finalizar.
 menu_inicial:
       mov ecx,mensaje_menu
       mov edx,len_mensaje_menu
@@ -976,12 +1008,12 @@ menu_inicial:
 	cmp ecx, 0xa66
     jz finalizar
     
-
+;llamada para verificar el gane del jugador.
 verificar_gane:
 	cmp dword[eax+ebx*4],'x'
 	jz mensaje_gano
 	ret
-
+;llamada para verificar la perdida del jugador.
 verificar_perdida_jugador:
 	cmp dword[eax+ebx*4],'<'
 	jz mensaje_perdio
@@ -990,12 +1022,12 @@ verificar_perdida_jugador:
 	cmp dword[eax+ebx*4],'~'
 	jz mensaje_perdio
 	ret
-
+;llamada para verificar la perdida del jugador por medio de los autos.
 verificar_perdida_automovil:
 	cmp dword[ebx+esi*4],'o'
 	jz mensaje_perdio
 	ret
-
+;imprime el mensaje de perdida
 mensaje_perdio:
 	  mov eax, 4                          ; Specify sys_write call
 	  mov ebx, 1                          ; Specify File Descriptor 1: Stdout
@@ -1016,7 +1048,7 @@ mensaje_perdio:
       call display_text
       call print_endLine
       jmp menu_inicial
-
+;imprime el mensaje de gane
 mensaje_gano:
       mov eax, 4                          ; Specify sys_write call
 	  mov ebx, 1                          ; Specify File Descriptor 1: Stdout
@@ -1046,7 +1078,7 @@ mensaje_gano:
       call display_text
       jmp menu_inicial
 
-
+;etiqueta para finalizar el programa
 finalizar:
     mov ebx,0
     mov eax,1
